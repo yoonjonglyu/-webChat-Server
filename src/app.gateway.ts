@@ -36,7 +36,11 @@ export class AppGateway
   @SubscribeMessage('send')
   handleSend(@MessageBody() data: string) {
     this.logger.log(data);
-    this.server.emit('receive', data);
+    this.server.emit('receive', {
+      message : data,
+      idx: 0,
+      room: "#1",
+    });
   }
 
   afterInit(server: Server) {
