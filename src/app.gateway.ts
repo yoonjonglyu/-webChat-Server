@@ -16,10 +16,9 @@ import { Server, Socket } from 'socket.io';
   namespace: 'webChat',
 })
 export class AppGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  constructor() {}
+  constructor() { }
 
   @WebSocketServer() server: Server;
 
@@ -34,12 +33,12 @@ export class AppGateway
     this.server.socketsJoin(data);
   }
   @SubscribeMessage('send')
-  handleSend(@MessageBody() data: string) {
+  handleSend(@MessageBody() data: { socketIdx: string, message: string, room: string }) {
     this.logger.log(data);
     this.server.emit('receive', {
-      message : data,
-      idx: 0,
-      room: "#1",
+      message: data.message,
+      idx: data.socketIdx,
+      room: data.room
     });
   }
 
