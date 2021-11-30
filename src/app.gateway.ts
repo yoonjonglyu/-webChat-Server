@@ -35,10 +35,9 @@ export class AppGateway
   @SubscribeMessage('send')
   handleSend(@MessageBody() data: { socketIdx: string, message: string, room: string }) {
     this.logger.log(data);
-    this.server.emit('receive', {
+    this.server.to(data.room).emit('receive', {
       message: data.message,
-      idx: data.socketIdx,
-      room: data.room
+      idx: data.socketIdx
     });
   }
 
@@ -47,10 +46,12 @@ export class AppGateway
   }
   handleDisconnect(client: Socket) {
     this.logger.log(`Client Disconnected : ${client.id}`);
+    this.server.to('#1').emit('leaveRoom', client.id);
   }
   handleConnection(client: Socket, ...args: any[]) {
     this.logger.log(`Client Connected : ${client.id}`);
     client.join('#1');
     client.emit('room', Array.from(client.rooms));
+    this.server.to('#1').emit('joinRoom', client.id);
   }
 }
