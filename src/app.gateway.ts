@@ -11,7 +11,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
-@WebSocketGateway(88, {
+@WebSocketGateway(443, {
   transports: ['websocket'],
   namespace: 'webChat',
 })
