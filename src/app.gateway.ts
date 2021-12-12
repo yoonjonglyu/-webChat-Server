@@ -28,9 +28,10 @@ export class AppGateway
     this.logger.log(data);
   }
   @SubscribeMessage('join')
-  handleJoin(@MessageBody() data: string) {
+  handleJoin(@MessageBody() data: { socketIdx: string, room: string }) {
     this.logger.log(data);
-    this.server.socketsJoin(data);
+    this.server.socketsJoin(data.room);
+    this.server.to(data.room).emit('joinRoom', data.socketIdx);
   }
   @SubscribeMessage('send')
   handleSend(@MessageBody() data: { socketIdx: string, message: string, room: string }) {
@@ -40,18 +41,20 @@ export class AppGateway
       idx: data.socketIdx
     });
   }
+  @SubscribeMessage('leave')
+  handleLeave(@MessageBody() data: { socketIdx: string, room: string }) {
+    this.logger.log(data);
+    this.server.to(data.room).emit('leaveRoom', data.socketIdx);
+  }
 
   afterInit(server: Server) {
     this.logger.log('init');
   }
   handleDisconnect(client: Socket) {
     this.logger.log(`Client Disconnected : ${client.id}`);
-    this.server.to('#1').emit('leaveRoom', client.id);
   }
   handleConnection(client: Socket, ...args: any[]) {
     this.logger.log(`Client Connected : ${client.id}`);
-    client.join('#1');
     client.emit('room', Array.from(client.rooms));
-    this.server.to('#1').emit('joinRoom', client.id);
   }
 }
