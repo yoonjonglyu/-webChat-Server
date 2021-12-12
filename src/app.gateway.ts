@@ -18,19 +18,19 @@ import { Server, Socket } from 'socket.io';
 export class AppGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  constructor() { }
+  usrList: Object;
+  constructor() { 
+    this.usrList = {}
+  }
 
   @WebSocketServer() server: Server;
 
   private logger: Logger = new Logger('AppGateway');
-  @SubscribeMessage('init')
-  handleEvent(@MessageBody() data: string) {
-    this.logger.log(data);
-  }
   @SubscribeMessage('join')
   handleJoin(@MessageBody() data: { socketIdx: string, room: string }) {
     this.logger.log(data);
     this.server.socketsJoin(data.room);
+    this.usrList[data.socketIdx] = data.room;
     this.server.to(data.room).emit('joinRoom', data.socketIdx);
   }
   @SubscribeMessage('send')
@@ -44,6 +44,8 @@ export class AppGateway
   @SubscribeMessage('leave')
   handleLeave(@MessageBody() data: { socketIdx: string, room: string }) {
     this.logger.log(data);
+    delete this.usrList[data.socketIdx];
+    this.server.socketsLeave(data.room);
     this.server.to(data.room).emit('leaveRoom', data.socketIdx);
   }
 
@@ -52,6 +54,8 @@ export class AppGateway
   }
   handleDisconnect(client: Socket) {
     this.logger.log(`Client Disconnected : ${client.id}`);
+    this.server.to(this.usrList[client.id]).emit('leaveRoom', client.id);
+    delete this.usrList[client.id];
   }
   handleConnection(client: Socket, ...args: any[]) {
     this.logger.log(`Client Connected : ${client.id}`);
