@@ -28,14 +28,12 @@ export class AppGateway
   private logger: Logger = new Logger('AppGateway');
   @SubscribeMessage('join')
   handleJoin(@MessageBody() data: { socketIdx: string, room: string }) {
-    this.logger.log(data);
     this.server.socketsJoin(data.room);
     this.usrList[data.socketIdx] = data.room;
     this.server.to(data.room).emit('joinRoom', data.socketIdx);
   }
   @SubscribeMessage('send')
   handleSend(@MessageBody() data: { socketIdx: string, message: string, room: string }) {
-    this.logger.log(data);
     this.server.to(data.room).emit('receive', {
       message: data.message,
       idx: data.socketIdx
@@ -43,7 +41,6 @@ export class AppGateway
   }
   @SubscribeMessage('leave')
   handleLeave(@MessageBody() data: { socketIdx: string, room: string }) {
-    this.logger.log(data);
     delete this.usrList[data.socketIdx];
     this.server.socketsLeave(data.room);
     this.server.to(data.room).emit('leaveRoom', data.socketIdx);
@@ -53,12 +50,10 @@ export class AppGateway
     this.logger.log('init');
   }
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client Disconnected : ${client.id}`);
     this.server.to(this.usrList[client.id]).emit('leaveRoom', client.id);
     delete this.usrList[client.id];
   }
   handleConnection(client: Socket, ...args: any[]) {
-    this.logger.log(`Client Connected : ${client.id}`);
     client.emit('room', Array.from(client.rooms));
   }
 }
