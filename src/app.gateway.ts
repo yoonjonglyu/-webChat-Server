@@ -15,6 +15,7 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway(parseInt(process.env.PORT) || 444, {
   transports: ['websocket'],
   namespace: 'webChat',
+  maxHttpBufferSize: 5 * 1024 * 1024
 })
 export class AppGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
