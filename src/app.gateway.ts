@@ -69,6 +69,13 @@ export class AppGateway
       idx: data.socketIdx
     });
   }
+  @SubscribeMessage('sendImage')
+  handleBlob(@MessageBody() data: { socketIdx: string, message: ArrayBuffer, room: string }) {
+    this.server.to(data.room).emit('receiveImage', {
+      message: data.message,
+      idx: data.socketIdx
+    });
+  }
 
   afterInit(server: Server) {
     this.logger.log('init');
