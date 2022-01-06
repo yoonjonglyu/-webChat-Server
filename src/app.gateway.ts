@@ -44,18 +44,24 @@ export class AppGateway
     this.server.emit('rooms', this.roomList);
   }
   @SubscribeMessage('join')
-  handleJoin(@MessageBody() data: { socketIdx: string, room: string }) {
+  handleJoin(
+    @MessageBody() data: { socketIdx: string, room: string },
+    @ConnectedSocket() client: Socket
+  ) {
     this.logger.log(data);
-    this.server.socketsJoin(data.room);
+    client.join(data.room);
     this.usrList[data.socketIdx] = data.room;
     this.rooms[data.room].push(data.socketIdx);
     this.server.to(data.room).emit('joinRoom', data.socketIdx);
   }
   @SubscribeMessage('leave')
-  handleLeave(@MessageBody() data: { socketIdx: string, room: string }) {
+  handleLeave(
+    @MessageBody() data: { socketIdx: string, room: string },
+    @ConnectedSocket() client: Socket
+  ) {
     this.logger.log(data);
     delete this.usrList[data.socketIdx];
-    this.server.socketsLeave(data.room);
+    client.leave(data.room);
     this.rooms[data.room] = this.rooms[data.room].filter((el) => el !== data.socketIdx);
     this.server.to(data.room).emit('leaveRoom', data.socketIdx);
   }
