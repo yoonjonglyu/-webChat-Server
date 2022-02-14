@@ -11,18 +11,19 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-
+const CryptoJS = require('crypto-js');
 @WebSocketGateway(parseInt(process.env.PORT) || 444, {
   transports: ['websocket'],
   namespace: 'webChat',
   maxHttpBufferSize: 5 * 1024 * 1024
 })
-export class AppGateway
+class AppGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  usrList: Object;
+  usrList: any;
   roomList: Array<string>;
-  rooms: Object;
+  rooms: any;
+  key: string
   constructor() {
     this.usrList = {};
     this.roomList = ['채팅방#1', '#1', '#2', '#3', '#4'];
@@ -33,6 +34,7 @@ export class AppGateway
       "#3": [],
       "#4": []
     };
+    this.key = 'goodTomato';
   }
 
   @WebSocketServer() server: Server;
@@ -70,11 +72,12 @@ export class AppGateway
     this.server.emit('headCount', this.rooms);
   }
   @SubscribeMessage('send')
-  handleMessage(@MessageBody() data: { socketIdx: string, message: string, room: string }) {
-    this.server.to(data.room).emit('receive', {
-      message: data.message,
-      idx: data.socketIdx
-    });
+  handleMessage(@MessageBody() data: { socketIdx: string, message: string, room: string } | string) {
+    const message: { socketIdx: string, message: string, room: string } = this.decrypt(data.toString());
+    this.server.to(message.room).emit('receive', this.encrypt({
+      message: message.message,
+      idx: message.socketIdx
+    }));
   }
   @SubscribeMessage('sendImage')
   handleBlob(@MessageBody() data: { socketIdx: string, message: ArrayBuffer, room: string }) {
@@ -99,4 +102,13 @@ export class AppGateway
     this.logger.log(`Client Connected : ${client.id}`);
     client.emit('room', Array.from(client.rooms));
   }
+  encrypt(message: Object) {
+    return CryptoJS.AES.encrypt(JSON.stringify(message), this.key).toString();
+  }
+  decrypt(message: string) {
+    return JSON.parse(
+      CryptoJS.AES.decrypt(message, this.key).toString(CryptoJS.enc.Utf8)
+    );
+  }
 }
+export default AppGateway;
